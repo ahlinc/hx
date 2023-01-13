@@ -1,4 +1,4 @@
-extern crate clap;
+#![allow(special_module_name)]
 mod lib;
 use clap::{App, Arg};
 use lib::{ARG_ARR, ARG_CLR, ARG_COL, ARG_FMT, ARG_FNC, ARG_INP, ARG_LEN, ARG_PLC};
