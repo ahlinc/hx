@@ -9,7 +9,7 @@ license = "MIT"
 name = "hx"
 readme ="README.md"
 version = "0.4.2"
-edition = "2018"
+edition = "2021"
 
 # see https://doc.rust-lang.org/cargo/reference/manifest.html
 
