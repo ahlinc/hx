@@ -247,12 +247,12 @@ pub fn append_ascii(target: &mut Vec<u8>, b: u8, colorize: bool) {
 pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
     let mut column_width: u64 = 10;
     let mut truncate_len: u64 = 0x0;
-    if let Some(len) = matches.value_of("func") {
+    if let Some(len) = matches.get_one::<u64>("func") {
         let mut p: usize = 4;
-        if let Some(places) = matches.value_of("places") {
-            p = places.parse::<usize>().unwrap();
+        if let Some(places) = matches.get_one::<usize>("places") {
+            p = *places;
         }
-        output_function(len.parse::<u64>().unwrap(), p);
+        output_function(*len, p);
     } else {
         let mut colorize = true;
 
@@ -273,22 +273,22 @@ pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
             Box::new(stdin.lock())
         } else {
             Box::new(BufReader::new(fs::File::open(
-                matches.value_of(ARG_INP).unwrap(),
+                matches.get_one::<String>(ARG_INP).unwrap(),
             )?))
         };
         let mut format_out = Format::LowerHex;
 
-        if let Some(columns) = matches.value_of(ARG_COL) {
-            column_width = columns.parse::<u64>().unwrap(); //turbofish
+        if let Some(columns) = matches.get_one::<u64>(ARG_COL) {
+            column_width = *columns;
         }
 
-        if let Some(length) = matches.value_of(ARG_LEN) {
-            truncate_len = length.parse::<u64>()?;
+        if let Some(length) = matches.get_one::<u64>(ARG_LEN) {
+            truncate_len = *length;
         }
 
-        if let Some(format) = matches.value_of(ARG_FMT) {
+        if let Some(format) = matches.get_one::<String>(ARG_FMT) {
             // o, x, X, p, b, e, E
-            match format {
+            match format.as_str() {
                 "o" => format_out = Format::Octal,
                 "x" => format_out = Format::LowerHex,
                 "X" => format_out = Format::UpperHex,
@@ -306,9 +306,8 @@ pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
             colorize = false;
         }
 
-        if let Some(color) = matches.value_of(ARG_CLR) {
-            let color_v = color.parse::<u8>().unwrap();
-            if color_v == 1 {
+        if let Some(color) = matches.get_one::<u8>(ARG_CLR) {
+            if *color == 1 {
                 colorize = true;
             } else {
                 colorize = false;
@@ -316,7 +315,7 @@ pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
         }
 
         // array output mode is mutually exclusive
-        if let Some(array) = matches.value_of(ARG_ARR) {
+        if let Some(array) = matches.get_one::<String>(ARG_ARR) {
             output_array(array, buf, truncate_len, column_width)?;
         } else {
             // Transforms this Read instance to an Iterator over its bytes.
@@ -374,9 +373,9 @@ pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
 pub fn is_stdin(matches: ArgMatches) -> Result<bool, Box<dyn Error>> {
     let mut is_stdin = false;
     if DBG > 0 {
-        dbg!(env::args().len(), matches.args.len());
+        dbg!(env::args().len(), matches.ids().len());
     }
-    if let Some(file) = matches.value_of(ARG_INP) {
+    if let Some(file) = matches.get_one::<String>(ARG_INP) {
         if DBG > 0 {
             dbg!(file);
         }
@@ -386,7 +385,7 @@ pub fn is_stdin(matches: ArgMatches) -> Result<bool, Box<dyn Error>> {
             dbg!(nth1);
         }
         is_stdin = ARGS.iter().any(|arg| matches.index_of(arg) == Some(2));
-    } else if matches.args.is_empty() {
+    } else if matches.ids().len() == 0 {
         is_stdin = true;
     }
     if DBG > 0 {
