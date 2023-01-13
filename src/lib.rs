@@ -15,8 +15,8 @@
 extern crate ansi_term;
 extern crate clap;
 
-use atty::Stream;
 use clap::ArgMatches;
+use is_terminal::IsTerminal;
 use no_color::is_no_color;
 use std::env;
 use std::error::Error;
@@ -254,6 +254,8 @@ pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
         }
         output_function(len.parse::<u64>().unwrap(), p);
     } else {
+        let mut colorize = true;
+
         // cases:
         //  $ cat Cargo.toml | target/debug/hx
         //  $ cat Cargo.toml | target/debug/hx -a r
@@ -261,14 +263,20 @@ pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
         //  $ target/debug/hx Cargo.toml -a r
         let is_stdin = is_stdin(matches.clone());
         let mut buf: Box<dyn BufRead> = if is_stdin.unwrap() {
-            Box::new(io::stdin().lock())
+            let stdin = io::stdin();
+            // prevent term color codes being sent to stdout
+            // test: cat Cargo.toml | target/debug/hx | more
+            // override via ARG_CLR below
+            if !stdin.is_terminal() {
+                colorize = false;
+            }
+            Box::new(stdin.lock())
         } else {
             Box::new(BufReader::new(fs::File::open(
                 matches.value_of(ARG_INP).unwrap(),
             )?))
         };
         let mut format_out = Format::LowerHex;
-        let mut colorize = true;
 
         if let Some(columns) = matches.value_of(ARG_COL) {
             column_width = columns.parse::<u64>().unwrap(); //turbofish
@@ -295,13 +303,6 @@ pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
         // check no_color here
         // override via ARG_CLR below
         if is_no_color() {
-            colorize = false;
-        }
-
-        // prevent term color codes being sent to stdout
-        // test: cat Cargo.toml | target/debug/hx | more
-        // override via ARG_CLR below
-        if !atty::is(Stream::Stdout) {
             colorize = false;
         }
 
