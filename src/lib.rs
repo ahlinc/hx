@@ -261,7 +261,7 @@ pub fn run(matches: ArgMatches) -> Result<(), Box<dyn Error>> {
         //  $ target/debug/hx Cargo.toml -a r
         let is_stdin = is_stdin(matches.clone());
         let mut buf: Box<dyn BufRead> = if is_stdin.unwrap() {
-            Box::new(BufReader::new(io::stdin()))
+            Box::new(io::stdin().lock())
         } else {
             Box::new(BufReader::new(fs::File::open(
                 matches.value_of(ARG_INP).unwrap(),
