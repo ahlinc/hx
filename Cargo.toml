@@ -24,6 +24,7 @@ panic = 'unwind'   # panic strategy (`-C panic=...`), can also be 'abort'
 
 [profile.release]
 opt-level = 3
+strip = "symbols"
 
 [dependencies]
 clap = "4.0"
